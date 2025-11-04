@@ -1,59 +1,250 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Settings, UserCircle2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
-export default function UserProfile() {
+export default function Mypage() {
+  const navigation = useNavigation();
+  const [user, setUser] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const storedUserID = await AsyncStorage.getItem("userID");
+        if (!storedUserID) {
+          setLoading(false);
+          return;
+        }
+
+        const userRes = await axios.get("http://192.168.68.56:8080/api/mypage/me", {
+          params: { userID: storedUserID },
+        });
+        setUser(userRes.data);
+
+        const historyRes = await axios.get("http://192.168.68.56:8080/api/history", {
+          params: { userID: storedUserID },
+        });
+        setHistory(historyRes.data);
+      } catch (err) {
+        console.error("데이터 불러오기 실패:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("userID");
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "LoginScreen" }], // ✅ 실제 등록된 이름으로 수정
+      });
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+      Alert.alert("오류", "로그아웃 중 문제가 발생했습니다.");
+    }
+  };
+
+  if (loading)
     return (
-        <div className="max-w-md mx-auto p-4 bg-white rounded-2xl shadow-md">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                    <UserCircle2 className="w-16 h-16 text-gray-500" />
-                    <h2 className="text-xl font-semibold">홍길동</h2>
-                </div>
-                <Settings className="w-6 h-6 text-gray-600" />
-            </div>
-
-            <div className="space-y-2 mb-4">
-                <div>
-                    <label className="block text-sm text-gray-600">성명</label>
-                    <Input value="홍길동" readOnly className="bg-blue-100" />
-                </div>
-                <div>
-                    <label className="block text-sm text-gray-600">전화번호</label>
-                    <Input value="010-xxxx-eeee" readOnly className="bg-blue-100" />
-                </div>
-                <div>
-                    <label className="block text-sm text-gray-600">이메일</label>
-                    <Input value="qwer@naver.com" readOnly className="bg-blue-100" />
-                </div>
-            </div>
-
-            <div className="space-y-2 mb-4">
-                <Button variant="outline" className="w-full">정보 수정</Button>
-                <Button variant="outline" className="w-full">알림 설정</Button>
-                <Button variant="outline" className="w-full">로그아웃</Button>
-                <Button variant="outline" className="w-full text-red-600 border-red-400">회원 탈퇴</Button>
-            </div>
-
-            <div>
-                <h3 className="text-lg font-bold border-b pb-1 mb-2">내가 본 레시피</h3>
-                <div className="grid grid-cols-3 gap-2">
-                    <Card className="p-1">
-                        <img src="/images/recipe1.jpg" alt="치즈 부대찌개" className="rounded-xl" />
-                        <CardContent className="text-xs mt-1">웹 가득 치즈 부대찌개</CardContent>
-                    </Card>
-                    <Card className="p-1">
-                        <img src="/images/recipe2.jpg" alt="냉면" className="rounded-xl" />
-                        <CardContent className="text-xs mt-1">시원한 냉면 요리</CardContent>
-                    </Card>
-                    <Card className="p-1">
-                        <img src="/images/recipe3.jpg" alt="돼지고기 조림" className="rounded-xl" />
-                        <CardContent className="text-xs mt-1">폴라로 만든 돼지고기 조림</CardContent>
-                    </Card>
-                </div>
-            </div>
-        </div>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+      </View>
     );
+
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.profileSection}>
+          <View style={styles.profilePlaceholder} />
+          <Text style={styles.profileName}>{user?.username || "이름 없음"}</Text>
+        </View>
+      </View>
+
+      <View style={styles.infoCard}>
+        <InfoRow label="성명" value={user?.username || "정보 없음"} />
+        <InfoRow label="전화번호" value={user?.phone || "정보 없음"} />
+        <InfoRow label="이메일" value={user?.email || "정보 없음"} />
+        <InfoRow label="생년월일" value={user?.birthdate || "정보 없음"} />
+      </View>
+
+      {/* 설정/로그아웃/탈퇴 섹션 */}
+      <View style={styles.menuCard}>
+        <MenuButton label="정보 수정" onPress={() => Alert.alert("정보 수정 기능 준비 중")} />
+        <MenuButton label="알림 설정" onPress={() => Alert.alert("알림 설정 기능 준비 중")} />
+        <MenuButton label="로그아웃" onPress={handleLogout} />
+        <MenuButton label="회원 탈퇴" onPress={() => Alert.alert("회원 탈퇴 기능 준비 중")} />
+      </View>
+
+      <View style={styles.recipeSection}>
+        <Text style={styles.recipeTitle}>내가 본 레시피</Text>
+        {history.length === 0 ? (
+          <Text style={styles.noHistory}>기록된 레시피가 없습니다.</Text>
+        ) : (
+          <FlatList
+            data={history}
+            horizontal
+            keyExtractor={(item, index) =>
+              item.recipeId?.toString() || index.toString()
+            }
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.recipeCard}
+                onPress={() =>
+                  navigation.navigate("RecipeDetail", { id: item.recipeId })
+                }
+              >
+                <Image
+                  source={{
+                    uri: item.imageUrl || "https://via.placeholder.com/100",
+                  }}
+                  style={styles.recipeImage}
+                />
+                <Text style={styles.recipeText} numberOfLines={1}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        )}
+      </View>
+    </ScrollView>
+  );
 }
+
+function InfoRow({ label, value }) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <View style={styles.infoValueBox}>
+        <Text style={styles.infoValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
+
+function MenuButton({ label, onPress }) {
+  return (
+    <TouchableOpacity style={styles.menuButton} onPress={onPress}>
+      <Text style={styles.menuText}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f7f9fc",
+    padding: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 25,
+  },
+  profileSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  profilePlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#ccc",
+  },
+  profileName: {
+    fontSize: 22,
+    fontWeight: "600",
+  },
+  infoCard: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  infoLabel: {
+    width: 70,
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "500",
+  },
+  infoValueBox: {
+    flex: 1,
+    backgroundColor: "#d7e8fc",
+    borderRadius: 6,
+    padding: 6,
+  },
+  infoValue: {
+    fontSize: 15,
+    color: "#222",
+  },
+  menuCard: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    marginBottom: 20,
+    overflow: "hidden",
+  },
+  menuButton: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  menuText: {
+    fontSize: 16,
+    color: "#222",
+  },
+  recipeSection: {
+    marginTop: 10,
+  },
+  recipeTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 10,
+  },
+  noHistory: {
+    color: "gray",
+  },
+  recipeCard: {
+    marginRight: 15,
+    width: 110,
+    alignItems: "center",
+  },
+  recipeImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    marginBottom: 5,
+  },
+  recipeText: {
+    fontSize: 13,
+    textAlign: "center",
+  },
+});

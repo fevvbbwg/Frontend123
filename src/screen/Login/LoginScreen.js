@@ -1,41 +1,44 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const LoginScreen = ({ navigation }) => {
     const [userID, setUserID] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = async () => {
-        if (!userID || !password) {
-            Alert.alert('입력 오류', '아이디와 비밀번호를 모두 입력해주세요.');
-            return;
-        }
+  const handleLogin = async () => {
+    if (!userID || !password) {
+      Alert.alert('입력 오류', '아이디와 비밀번호를 모두 입력해주세요.');
+      return;
+    }
 
-        try {
-            const response = await fetch('http://10.0.2.2:8080/api/users/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ userID, password }),
-            });
+    try {
+      const response = await fetch('http://192.168.68.56:8080/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userID, password }),
+      });
 
-            if (response.ok) {
-                const data = await response.json();
-                console.log('로그인 성공:', data);
-                navigation.navigate('MainScreen');
-            } else {
-                const errorData = await response.text();
-                console.log('로그인 실패 응답:', errorData);
-                Alert.alert('로그인 실패', '아이디나 비밀번호를 확인해주세요.');
-            }
-        } catch (error) {
-            console.error('로그인 에러:', error);
-            Alert.alert('네트워크 오류', '서버와의 연결에 문제가 발생했습니다.');
-        }
-    };
+      if (response.ok) {
+        const data = await response.json();
+        console.log('로그인 성공:', data);
 
-    return (
+        // ✅ 로그인 성공 시 userID 저장
+        await AsyncStorage.setItem('userID', userID);
+
+        navigation.replace('MainScreen'); // 뒤로가기 못 하게 replace
+      } else {
+        const errorData = await response.text();
+        console.log('로그인 실패 응답:', errorData);
+        Alert.alert('로그인 실패', '아이디나 비밀번호를 확인해주세요.');
+      }
+    } catch (error) {
+      console.error('로그인 에러:', error);
+      Alert.alert('네트워크 오류', '서버와의 연결에 문제가 발생했습니다.');
+    }
+  };
+
+
+  return (
         <View style={styles.container}>
             <Text style={styles.title}>Recipe Recommend</Text>
 
@@ -46,15 +49,16 @@ const LoginScreen = ({ navigation }) => {
                 style={styles.input}
             />
 
-            <TextInput
-                placeholder="비밀번호"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                style={styles.input}
-            />
+          <TextInput
+            placeholder="비밀번호"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={[styles.input, { color: 'black' }]} // ✅ 글자색 명시
+          />
 
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
                 <Text style={styles.loginButtonText}>로그인</Text>
             </TouchableOpacity>
 
