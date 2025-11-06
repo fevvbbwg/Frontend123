@@ -32,7 +32,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const res = await fetch(`http://192.168.68.56:8080/api/recipes/${id}`);
+        const res = await fetch(`http://192.168.68.58:8080/api/recipes/${id}`);
         if (!res.ok) throw new Error('네트워크 오류');
         const data = await res.json();
         setRecipe(data);
@@ -60,7 +60,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
     // 오늘의 레시피 랜덤 4개 가져오기
     const fetchTodayRecipes = async () => {
       try {
-        const todayRes = await fetch("http://192.168.68.56:8080/api/recipes/today");
+        const todayRes = await fetch("http://192.168.68.58:8080/api/recipes/today");
         if (todayRes.ok) {
           const todayData = await todayRes.json();
           setRecommendedRecipes(todayData);
@@ -133,6 +133,8 @@ const RecipeDetailScreen = ({ route, navigation }) => {
       >
         <Text style={{ color: 'white' }}>🔍 유튜브에서 검색하기</Text>
       </TouchableOpacity>
+
+      <Text style={styles.noticeText}>※ 실제 요리와 다를 수 있습니다.</Text>
 
       {/* 추천 레시피 */}
       {recommendedRecipes.length > 0 && (

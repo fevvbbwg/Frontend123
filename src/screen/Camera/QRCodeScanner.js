@@ -17,7 +17,7 @@ const QRCodeScanner = () => {
   const ref = useRef(null);
   const navigation = useNavigation();
   const route = useRoute();
-  const { userID } = route.params; // ✅ userID 받기
+  const { userID } = route.params;
 
   useEffect(() => {
     setScanned(false);
@@ -28,34 +28,63 @@ const QRCodeScanner = () => {
       setLoading(true);
       const cleanBarcode = String(barcode).trim();
 
-      // 1️⃣ 우선 글로벌 DB 조회
+      // 1️⃣ Open Food Facts (글로벌)
       let response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${cleanBarcode}.json`);
       let data = await response.json();
 
-      // 2️⃣ 만약 조회 실패면 한국 DB로 재시도
+      // 2️⃣ 글로벌 실패 시 한국 DB 재시도
       if (data.status !== 1 || !data.product) {
-        console.log('🌏 글로벌 DB 조회 실패 → 한국 DB 재시도');
+        console.log('🌏 OFF 글로벌 실패 → 한국 DB 재시도');
         response = await fetch(`https://kr.openfoodfacts.org/api/v2/product/${cleanBarcode}.json`);
         data = await response.json();
       }
 
+      // 3️⃣ 한국 DB도 실패 시 UPCitemdb 보조 조회
+      if (data.status !== 1 || !data.product) {
+        console.log('🔄 OFF 실패 → UPCitemdb 시도');
+        try {
+          const upcResponse = await fetch(
+            `https://api.upcitemdb.com/prod/trial/lookup?upc=${cleanBarcode}`
+          );
+          const upcData = await upcResponse.json();
+
+          // UPCitemdb 응답 정상 처리
+          if (upcData.items && upcData.items.length > 0) {
+            const item = upcData.items[0];
+            data = {
+              status: 1,
+              product: {
+                product_name: item.title || '알 수 없는 제품',
+                brands: item.brand || '정보 없음',
+                categories: item.category || '분류 없음',
+                image_front_small_url: item.images?.[0] || null,
+              },
+            };
+          }
+        } catch (upcError) {
+          // ❌ 할당량 초과, 네트워크 오류 등 — 경고 없이 무시
+          console.log('⚠️ UPCitemdb 요청 실패 또는 제한 초과 (무시)');
+        }
+      }
+
       setLoading(false);
 
-      // 3️⃣ 두 번째 시도까지 실패 시 직접 입력 화면 이동
+      // ✅ 조회 성공 → 등록 화면 이동
       if (data.status === 1 && data.product) {
-        const product = data.product;
+        const p = data.product;
         const productData = {
           barcode: cleanBarcode,
-          name: product.product_name || '알 수 없는 제품',
-          brand: product.brands || '정보 없음',
-          category: product.categories || '분류 없음',
-          image: product.image_front_small_url || null,
+          name: p.product_name || '알 수 없는 제품',
+          brand: p.brands || '정보 없음',
+          category: p.categories || '분류 없음',
+          image: p.image_front_small_url || null,
         };
         navigation.navigate('IngredientRegister', { productData, userID });
       } else {
+        // ❌ 조회 실패 → 경고 후 직접입력 이동
         Alert.alert(
           '조회 실패',
-          '해당 바코드의 식품 정보를 찾을 수 없습니다.\n직접 입력 화면으로 이동합니다.',
+          '해당 제품 정보를 찾을 수 없습니다.\n직접 입력 화면으로 이동합니다.',
           [
             {
               text: '확인',
@@ -70,11 +99,10 @@ const QRCodeScanner = () => {
       }
     } catch (error) {
       setLoading(false);
-      console.error('❌ Fetch Error:', error);
-      Alert.alert('오류', '제품 정보를 불러오는 중 오류가 발생했습니다.');
+      console.log('❌ Fetch Error:', error);
+      Alert.alert('오류', '제품 정보를 불러오는 중 문제가 발생했습니다.');
     }
   };
-
 
   const onBarCodeRead = (event) => {
     if (scanned) return;

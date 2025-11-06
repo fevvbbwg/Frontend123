@@ -56,7 +56,7 @@ const Signup = () => {
     if (isCheckingUserID) return;
     setIsCheckingUserID(true);
     try {
-      const res = await fetch(`http://192.168.68.56:8080/api/users/check-userID`, {
+      const res = await fetch(`http://192.168.68.58:8080/api/users/check-userID`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userID: form.userID }),
@@ -112,7 +112,7 @@ const Signup = () => {
     };
 
     try {
-      const response = await fetch('http://192.168.68.56:8080/api/users/register', {
+      const response = await fetch('http://192.168.68.58:8080/api/users/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

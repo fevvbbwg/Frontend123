@@ -23,10 +23,12 @@ export default function RecipeScreen({ route, navigation }) {
   });
   const [loading, setLoading] = useState(true);
 
+  const BASE_URL = "http://192.168.68.58:8080/api";
+
   // 🧊 식자재 불러오기
   const fetchIngredients = useCallback(async () => {
     try {
-      const res = await axios.get("http://192.168.68.56:8080/api/ingredient/list", {
+      const res = await axios.get(`${BASE_URL}/ingredient/list`, {
         params: { userID },
       });
       setIngredients(res.data);
@@ -36,37 +38,37 @@ export default function RecipeScreen({ route, navigation }) {
     }
   }, [userID]);
 
-  // 🌿 제철 요리
+  // 🌿 제철 요리 (type = seasonal)
   const fetchSeasonal = useCallback(async () => {
     try {
-      const res = await axios.get("http://192.168.68.56:8080/api/recipes/category", {
+      const res = await axios.get(`${BASE_URL}/recipes/all`, {
         params: { type: "seasonal" },
       });
       setSeasonalRecipes(res.data);
     } catch (error) {
-      console.error(error);
+      console.error("제철 레시피 불러오기 실패:", error);
     }
   }, []);
 
   // 🍖 카테고리별 요리
   const fetchCategory = useCallback(async (type) => {
     try {
-      const res = await axios.get("http://192.168.68.56:8080/api/recipes/category", {
+      const res = await axios.get(`${BASE_URL}/recipes/all`, {
         params: { type },
       });
       setCategories((prev) => ({ ...prev, [type]: res.data }));
     } catch (error) {
-      console.error(error);
+      console.error(`${type} 레시피 불러오기 실패:`, error);
     }
   }, []);
 
-  // 데이터 로드
+  // 🔄 데이터 로드
   useEffect(() => {
     const loadData = async () => {
       await fetchIngredients();
       await fetchSeasonal();
 
-      // 순차 호출로 초기 렉 완화
+      // 순차 호출 (초기 렉 방지)
       setTimeout(() => fetchCategory("meat"), 300);
       setTimeout(() => fetchCategory("fish"), 600);
       setTimeout(() => fetchCategory("fruit"), 900);
@@ -78,7 +80,7 @@ export default function RecipeScreen({ route, navigation }) {
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
 
-  // 🔹 카테고리 섹션 (FlatList 적용)
+  // 🔹 카테고리 섹션 (FlatList)
   const renderCategorySection = (title, data, type) => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -96,27 +98,33 @@ export default function RecipeScreen({ route, navigation }) {
           keyExtractor={(_, idx) => idx.toString()}
           horizontal
           showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.recipeCard}
-              onPress={() => navigation.navigate("RecipeDetail", { recipe: item })}
-            >
-              {item.imgUrl ? (
-                <Image
-                  source={{ uri: item.imgUrl }}
-                  style={styles.recipeImg}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.noImg}>
-                  <Text style={styles.noImgText}>이미지 없음</Text>
-                </View>
-              )}
-              <Text style={styles.recipeTitle} numberOfLines={1}>
-                {item.rcpTtl}
-              </Text>
-            </TouchableOpacity>
-          )}
+          renderItem={({ item }) => {
+            const id = item.rcpSno || item.id;
+            const title = item.rcpTtl || item.title || "제목 없음";
+            const image = item.rcpImgUrl || item.imgUrl || item.imageUrl;
+
+            return (
+              <TouchableOpacity
+                style={styles.recipeCard}
+                onPress={() => navigation.navigate("RecipeDetail", { id })}
+              >
+                {image ? (
+                  <Image
+                    source={{ uri: image }}
+                    style={styles.recipeImg}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.noImg}>
+                    <Text style={styles.noImgText}>이미지 없음</Text>
+                  </View>
+                )}
+                <Text style={styles.recipeTitle} numberOfLines={1}>
+                  {title}
+                </Text>
+              </TouchableOpacity>
+            );
+          }}
         />
       ) : (
         <Text style={styles.emptyText}>레시피가 없습니다.</Text>
@@ -146,7 +154,7 @@ export default function RecipeScreen({ route, navigation }) {
         )}
       </ScrollView>
 
-      {/* 🤖 AI 추천 */}
+      {/* 🤖 AI 추천 버튼 */}
       <TouchableOpacity
         style={styles.recommendBtn}
         onPress={() => Alert.alert("AI 추천 실행")}
@@ -154,7 +162,7 @@ export default function RecipeScreen({ route, navigation }) {
         <Text style={styles.recommendText}>🤖 내 식자재로 추천받기</Text>
       </TouchableOpacity>
 
-      {/* 🌿 카테고리별 섹션 */}
+      {/* 🌿 카테고리별 레시피 */}
       {renderCategorySection("🌿 제철 음식", seasonalRecipes, "seasonal")}
       {renderCategorySection("🍖 고기 요리", categories.meat, "meat")}
       {renderCategorySection("🐟 생선 요리", categories.fish, "fish")}
@@ -234,4 +242,3 @@ const styles = StyleSheet.create({
   recipeTitle: { marginTop: 5, fontSize: 13, fontWeight: "500", textAlign: "center" },
   emptyText: { color: "#888", fontSize: 13 },
 });
-

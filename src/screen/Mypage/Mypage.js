@@ -29,7 +29,7 @@ export default function Mypage() {
           return;
         }
 
-        const userRes = await axios.get("http://192.168.68.56:8080/api/mypage/me", {
+        const userRes = await axios.get("http://192.168.68.58:8080/api/mypage/me", {
           params: { userID: storedUserID },
         });
         setUser(userRes.data);
