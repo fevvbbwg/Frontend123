@@ -29,7 +29,7 @@ export default function Mypage() {
           return;
         }
 
-        const userRes = await axios.get("http://192.168.68.58:8080/api/mypage/me", {
+        const userRes = await axios.get("http://192.168.68.56:8080/api/mypage/me", {
           params: { userID: storedUserID },
         });
         setUser(userRes.data);
@@ -50,10 +50,9 @@ export default function Mypage() {
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem("userID");
-
       navigation.reset({
         index: 0,
-        routes: [{ name: "LoginScreen" }], // ✅ 실제 등록된 이름으로 수정
+        routes: [{ name: "LoginScreen" }],
       });
     } catch (error) {
       console.error("로그아웃 실패:", error);
@@ -70,6 +69,8 @@ export default function Mypage() {
 
   return (
     <ScrollView style={styles.container}>
+
+      {/* 프로필 */}
       <View style={styles.header}>
         <View style={styles.profileSection}>
           <View style={styles.profilePlaceholder} />
@@ -77,6 +78,7 @@ export default function Mypage() {
         </View>
       </View>
 
+      {/* 사용자 정보 */}
       <View style={styles.infoCard}>
         <InfoRow label="성명" value={user?.username || "정보 없음"} />
         <InfoRow label="전화번호" value={user?.phone || "정보 없음"} />
@@ -84,16 +86,30 @@ export default function Mypage() {
         <InfoRow label="생년월일" value={user?.birthdate || "정보 없음"} />
       </View>
 
-      {/* 설정/로그아웃/탈퇴 섹션 */}
-      <View style={styles.menuCard}>
+      {/* ---- 내 활동 ---- */}
+      <View style={styles.menuGroupCard}>
+        <Text style={styles.groupTitle}>내 활동</Text>
+
+        <MenuButton
+          label="내가 만든 레시피"
+          onPress={() => navigation.navigate("MyRecipesScreen")}
+        />
+      </View>
+
+      {/* ---- 설정 ---- */}
+      <View style={styles.menuGroupCard}>
+        <Text style={styles.groupTitle}>설정</Text>
+
         <MenuButton label="정보 수정" onPress={() => Alert.alert("정보 수정 기능 준비 중")} />
         <MenuButton label="알림 설정" onPress={() => Alert.alert("알림 설정 기능 준비 중")} />
         <MenuButton label="로그아웃" onPress={handleLogout} />
         <MenuButton label="회원 탈퇴" onPress={() => Alert.alert("회원 탈퇴 기능 준비 중")} />
       </View>
 
+      {/* ---- 내가 본 레시피 ---- */}
       <View style={styles.recipeSection}>
         <Text style={styles.recipeTitle}>내가 본 레시피</Text>
+
         {history.length === 0 ? (
           <Text style={styles.noHistory}>기록된 레시피가 없습니다.</Text>
         ) : (
@@ -124,6 +140,7 @@ export default function Mypage() {
           />
         )}
       </View>
+
     </ScrollView>
   );
 }
@@ -205,22 +222,31 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#222",
   },
-  menuCard: {
+
+  menuGroupCard: {
     backgroundColor: "white",
     borderRadius: 12,
     marginBottom: 20,
     overflow: "hidden",
   },
+  groupTitle: {
+    padding: 20,
+    fontSize: 18,
+    fontWeight: "700",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
   menuButton: {
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#f0f0f0",
   },
   menuText: {
     fontSize: 16,
     color: "#222",
   },
+
   recipeSection: {
     marginTop: 10,
   },

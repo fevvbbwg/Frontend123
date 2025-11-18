@@ -21,7 +21,7 @@ const FindID = ({ navigation }) => {
         }
 
         try {
-            const response = await fetch('http://192.168.68.58:8080/api/users/find-id', {
+            const response = await fetch('http://192.168.68.56:8080/api/users/find-id', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

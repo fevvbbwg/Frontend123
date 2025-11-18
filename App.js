@@ -21,6 +21,9 @@ import MoreRecipesScreen from './src/screen/Main/MoreRecipesScreen';
 import FridgeScreen from './src/screen/Main/FridgeScreen';
 import IngredientEditScreen from './src/screen/Main/IngredientEditScreen';
 import RecipeScreen from './src/screen/Recipe/RecipeScreen';
+import CustomRecipeScreen from './src/screen/Recipe/CustomRecipeScreen';
+import MyRecipesScreen from './src/screen/Mypage/MyRecipesScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -103,6 +106,17 @@ const App = () => {
           component={RecipeScreen}
           options={{ title: '레시피' }}
         />
+        <Stack.Screen
+          name="CustomRecipeScreen"
+          component={CustomRecipeScreen}
+          options={{ title: '나만의 레시피 만들기' }}
+        />
+        <Stack.Screen
+          name="MyRecipesScreen"
+          component={MyRecipesScreen}
+          options={{ title: '내가 만든 레시피' }}
+        />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

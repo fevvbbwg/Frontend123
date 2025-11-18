@@ -27,8 +27,8 @@ const MoreRecipesScreen = () => {
       setIsFetching(true);
       const url =
         section === 'today'
-          ? `http://192.168.68.58:8080/api/recipes/today-more?page=${pageNum}&size=${PAGE_SIZE}`
-          : `http://192.168.68.58:8080/api/recipes/popular-more?page=${pageNum}&size=${PAGE_SIZE}`;
+          ? `http://192.168.68.56:8080/api/recipes/today-more?page=${pageNum}&size=${PAGE_SIZE}`
+          : `http://192.168.68.56:8080/api/recipes/popular-more?page=${pageNum}&size=${PAGE_SIZE}`;
 
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP status ${response.status}`);
