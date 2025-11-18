@@ -29,12 +29,12 @@ export default function Mypage() {
           return;
         }
 
-        const userRes = await axios.get("http://192.168.68.56:8080/api/mypage/me", {
+        const userRes = await axios.get("http://192.168.68.51:8080/api/mypage/me", {
           params: { userID: storedUserID },
         });
         setUser(userRes.data);
 
-        const historyRes = await axios.get("http://192.168.68.56:8080/api/history", {
+        const historyRes = await axios.get("http://192.168.68.51:8080/api/history", {
           params: { userID: storedUserID },
         });
         setHistory(historyRes.data);

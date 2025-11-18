@@ -19,7 +19,6 @@ export default function MyRecipesScreen({ navigation }) {
     const fetchMyRecipes = async () => {
       try {
         const userID = await AsyncStorage.getItem("userID");
-        console.log("userID:", userID); // userID 확인용
 
         if (!userID) {
           setRecipes([]);
@@ -27,7 +26,7 @@ export default function MyRecipesScreen({ navigation }) {
         }
 
         const res = await axios.get(
-          `http://192.168.68.56:8080/api/user-recipes/list/${userID}`
+          `http://192.168.68.51:8080/api/user-recipes/list/${userID}`
         );
 
         setRecipes(res.data);
@@ -57,12 +56,15 @@ export default function MyRecipesScreen({ navigation }) {
       ) : (
         <FlatList
           data={recipes}
-          keyExtractor={(item) => item.id.toString()} // 수정: recipeId → id
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.card}
               onPress={() =>
-                navigation.navigate("RecipeDetail", { id: item.id }) // 수정: recipeId → id
+                navigation.navigate("RecipeDetail", {
+                  id: item.id,
+                  type: "custom", // ⭐ 커스텀 레시피임을 명확히 전달
+                })
               }
             >
               <Image

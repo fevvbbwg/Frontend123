@@ -24,7 +24,7 @@ const SearchResults = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://192.168.68.56:8080/api/recipes/search?keyword=${term}`
+        `http://192.168.68.51:8080/api/recipes/search?keyword=${term}`
       );
       if (!response.ok) throw new Error(`HTTP status ${response.status}`);
       const data = await response.json();

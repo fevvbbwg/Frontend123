@@ -8,58 +8,56 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const RecipeDetailScreen = ({ route, navigation }) => {
-  const { id, isUserRecipe } = route.params; // MyRecipesScreen에서 isUserRecipe:true로 보냄
+  const { id, type } = route.params;
+  const isUserRecipe = type === 'custom';
+
   const [recipe, setRecipe] = useState(null);
   const [videoId, setVideoId] = useState(null);
   const [recommendedRecipes, setRecommendedRecipes] = useState([]);
   const API_KEY = "AIzaSyBO5YIQ30W4hOrhQPsTW_peEfpAbG52sbg";
 
-  // ✅ 레시피 히스토리 저장 (UserRecipe도 가능하게)
   const saveRecipeHistory = async (userID, title, recipeId, imageUrl) => {
     if (!userID || !title) return;
     try {
-      await axios.post("http://192.168.68.56:8080/api/recipe-history/save", {
+      await axios.post("http://192.168.68.51:8080/api/recipe-history/save", {
         userID,
         title,
         recipeId: recipeId?.toString(),
         imageUrl: imageUrl || null,
       });
-    } catch {
-      // 오류 발생 시 조용히 무시
-    }
+    } catch {}
   };
 
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        // 🔹 API URL 선택
         let url = isUserRecipe
-          ? `http://192.168.68.56:8080/api/user-recipes/${id}`
-          : `http://192.168.68.56:8080/api/recipes/${id}`;
+          ? `http://192.168.68.51:8080/api/user-recipes/${id}`
+          : `http://192.168.68.51:8080/api/recipes/${id}`;
 
         const res = await fetch(url);
-        if (!res.ok) throw new Error('네트워크 오류');
         const data = await res.json();
 
-        // UserRecipe일 경우 필드명 변환
         if (isUserRecipe) {
           setRecipe({
-            id: data.id,
-            title: data.title,
-            description: data.description,
-            ingredients: data.ingredients,
+            rcpSno: data.id,
+            rcpTtl: data.title,
+            rcpImgUrl: data.imageUrl,
+            ckgIpdc: data.description,
+            ckgMtrlCn: data.ingredients,
+            rgtrNm: data.userId,
+            ckgTimeNm: data.cookingTime,
+            ckgInbunNm: data.servings,
+            ckgDodfNm: "정보 없음",
+            ckgKndActoNm: data.category,
             steps: data.steps,
-            imageUrl: data.imageUrl,
-            category: data.category,
-            servings: data.servings,
-            cookingTime: data.cookingTime,
           });
         } else {
           setRecipe(data);
         }
 
-        // 유튜브 영상 검색 (title 기준)
         const searchTitle = isUserRecipe ? data.title : data.rcpTtl;
+
         if (searchTitle) {
           const query = encodeURIComponent(searchTitle + " 레시피");
           const ytRes = await fetch(
@@ -69,43 +67,47 @@ const RecipeDetailScreen = ({ route, navigation }) => {
           if (ytData.items?.length) setVideoId(ytData.items[0].id.videoId);
         }
 
-        // 히스토리 저장
         const userID = await AsyncStorage.getItem("userID");
-        if (userID) await saveRecipeHistory(userID, searchTitle, data.id, data.imageUrl || data.rcpImgUrl);
-
-      } catch (error) {
-        console.error("레시피 불러오기 실패:", error);
-        Alert.alert('오류', '레시피 정보를 불러오지 못했습니다.');
-      }
-    };
-
-    // 추천 레시피 (일반 레시피만)
-    const fetchRecommendedRecipes = async () => {
-      try {
-        const todayRes = await fetch("http://192.168.68.56:8080/api/recipes/today");
-        if (todayRes.ok) {
-          const todayData = await todayRes.json();
-          setRecommendedRecipes(todayData);
+        if (userID) {
+          const img = isUserRecipe ? data.imageUrl : data.rcpImgUrl;
+          const rid = isUserRecipe ? data.id : data.rcpSno;
+          await saveRecipeHistory(userID, searchTitle, rid, img);
         }
-      } catch (err) {
-        console.error("오늘의 레시피 불러오기 실패:", err);
+      } catch (error) {
+        Alert.alert("오류", "레시피 정보를 불러오지 못했습니다.");
       }
     };
 
     fetchRecipe();
-    fetchRecommendedRecipes();
+
+    const fetchRecommended = async () => {
+      try {
+        const res = await fetch("http://192.168.68.51:8080/api/recipes/today");
+        if (res.ok) setRecommendedRecipes(await res.json());
+      } catch {}
+    };
+
+    fetchRecommended();
   }, [id, isUserRecipe]);
 
-  if (!recipe) return <Text style={{ padding: 20 }}>로딩 중...</Text>;
+  if (!recipe)
+    return (
+      <Text style={{ padding: 20, textAlign: "center", marginTop: 50 }}>
+        로딩 중...
+      </Text>
+    );
 
-  // 추천 레시피 눌렀을 때 이동
   const renderRecommendedItem = ({ item }) => (
     <TouchableOpacity
       style={styles.recommendedItem}
-      onPress={() => navigation.push('RecipeDetail', { id: item.rcpSno })}
+      onPress={() =>
+        navigation.push("RecipeDetail", { id: item.rcpSno, type: "standard" })
+      }
     >
       <Image source={{ uri: item.rcpImgUrl }} style={styles.recommendedImage} />
-      <Text style={styles.recommendedTitle} numberOfLines={2}>{item.rcpTtl}</Text>
+      <Text style={styles.recommendedTitle} numberOfLines={2}>
+        {item.rcpTtl}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -115,32 +117,81 @@ const RecipeDetailScreen = ({ route, navigation }) => {
         <Text style={{ fontSize: 16 }}>← 뒤로</Text>
       </TouchableOpacity>
 
-      <Image source={{ uri: recipe.imageUrl || recipe.rcpImgUrl }} style={styles.mainImage} />
-      <Text style={styles.title}>{recipe.title || recipe.rcpTtl}</Text>
+      {recipe.rcpImgUrl ? (
+        <Image source={{ uri: recipe.rcpImgUrl }} style={styles.mainImage} />
+      ) : (
+        <View
+          style={[
+            styles.mainImage,
+            { backgroundColor: "#eee", justifyContent: "center", alignItems: "center" },
+          ]}
+        >
+          <Text style={{ color: "#888" }}>이미지 없음</Text>
+        </View>
+      )}
+
+      <Text style={styles.title}>{recipe.rcpTtl}</Text>
+
+      <View style={styles.statsContainer}>
+        <View style={styles.statBox}>
+          <Text style={styles.statText}>💬 {recipe.commentCount || 0}</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statText}>📌 {recipe.scrapCount || 0}</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statText}>❤️ {recipe.likeCount || 0}</Text>
+        </View>
+      </View>
+
+      <View style={styles.infoCard}>
+        <Text style={styles.infoText}>👤 등록자: {recipe.rgtrNm || "익명"}</Text>
+        <Text style={styles.infoText}>🕒 시간: {recipe.ckgTimeNm || "-"}</Text>
+        <Text style={styles.infoText}>🍽 인분: {recipe.ckgInbunNm || "-"}</Text>
+        <Text style={styles.infoText}>📂 종류: {recipe.ckgKndActoNm || "-"}</Text>
+        {!isUserRecipe && (
+          <Text style={styles.infoText}>⚙️ 난이도: {recipe.ckgDodfNm || "-"}</Text>
+        )}
+      </View>
 
       <Text style={styles.sectionTitle}>📖 요리 소개</Text>
-      <Text style={styles.paragraph}>{recipe.description || recipe.ckgIpdc || '정보 없음'}</Text>
+      <Text style={styles.paragraph}>{recipe.ckgIpdc || "내용 없음"}</Text>
 
       <Text style={styles.sectionTitle}>🧂 사용 재료</Text>
-      <Text style={styles.paragraph}>{recipe.ingredients || recipe.ckgMtrlCn || '정보 없음'}</Text>
+      <Text style={styles.paragraph}>{recipe.ckgMtrlCn || "내용 없음"}</Text>
 
-      <Text style={styles.sectionTitle}>🍳 조리 영상</Text>
+      {isUserRecipe && recipe.steps && (
+        <>
+          <Text style={styles.sectionTitle}>🍳 조리 순서</Text>
+          <Text style={styles.paragraph}>{recipe.steps}</Text>
+        </>
+      )}
+
+      <Text style={styles.sectionTitle}>🎥 관련 영상</Text>
       {videoId ? (
         <YoutubePlayer height={200} play={false} videoId={videoId} />
       ) : (
-        <Text style={{ padding: 10, fontStyle: 'italic' }}>영상 정보를 불러오는 중...</Text>
+        <Text style={{ padding: 10, fontStyle: "italic", color: "#888" }}>
+          관련 영상을 찾을 수 없습니다.
+        </Text>
       )}
 
       <TouchableOpacity
         style={styles.youtubeButton}
-        onPress={() => Linking.openURL(`https://www.youtube.com/results?search_query=${encodeURIComponent((recipe.title || recipe.rcpTtl) + ' 레시피')}`)}
+        onPress={() =>
+          Linking.openURL(
+            `https://www.youtube.com/results?search_query=${encodeURIComponent(
+              recipe.rcpTtl + " 레시피"
+            )}`
+          )
+        }
       >
-        <Text style={{ color: 'white' }}>🔍 유튜브에서 검색하기</Text>
+        <Text style={{ color: "white" }}>🔍 유튜브에서 더보기</Text>
       </TouchableOpacity>
 
       {recommendedRecipes.length > 0 && (
         <View style={styles.cardWrapper}>
-          <Text style={styles.sectionTitle}>🍽 이런 레시피는 어떠신가요?</Text>
+          <Text style={styles.sectionTitle}>🍽 다른 추천 레시피</Text>
           <FlatList
             data={recommendedRecipes}
             horizontal
@@ -150,6 +201,8 @@ const RecipeDetailScreen = ({ route, navigation }) => {
           />
         </View>
       )}
+
+      <View style={{ height: 30 }} />
     </ScrollView>
   );
 };
@@ -157,18 +210,85 @@ const RecipeDetailScreen = ({ route, navigation }) => {
 export default RecipeDetailScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16 },
+  container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 16 },
   backButton: { marginVertical: 10 },
-  mainImage: { width: '100%', height: 230, borderRadius: 10 },
-  title: { fontSize: 22, fontWeight: 'bold', marginVertical: 10, textAlign: 'center', color: '#333' },
-
-  sectionTitle: { fontWeight: 'bold', fontSize: 17, marginBottom: 6, marginTop: 10, color: '#222' },
-  paragraph: { marginBottom: 12, fontSize: 14, color: '#333', lineHeight: 20 },
-
-  youtubeButton: { marginTop: 12, padding: 12, backgroundColor: '#FF0000', borderRadius: 8, alignItems: 'center' },
-
+  mainImage: {
+    width: "100%",
+    height: 230,
+    borderRadius: 10,
+    resizeMode: "cover",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginVertical: 10,
+    textAlign: "center",
+    color: "#333",
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  statBox: {
+    backgroundColor: "#f4f4f4",
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginHorizontal: 6,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  statText: { fontSize: 14, color: "#333" },
+  infoCard: {
+    backgroundColor: "#f8f8f8",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  infoText: { fontSize: 14, color: "#444", marginVertical: 2 },
+  sectionTitle: {
+    fontWeight: "bold",
+    fontSize: 17,
+    marginBottom: 6,
+    marginTop: 15,
+    color: "#222",
+  },
+  paragraph: { marginBottom: 12, fontSize: 14, color: "#333", lineHeight: 22 },
+  youtubeButton: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: "#FF0000",
+    borderRadius: 8,
+    alignItems: "center",
+  },
   cardWrapper: { marginTop: 20, marginBottom: 20 },
-  recommendedItem: { width: 140, marginRight: 12, backgroundColor: '#fafafa', borderRadius: 10, borderWidth: 1, borderColor: '#ddd', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  recommendedImage: { width: '100%', height: 100, borderTopLeftRadius: 10, borderTopRightRadius: 10 },
-  recommendedTitle: { fontSize: 13, marginTop: 6, marginHorizontal: 6, textAlign: 'center', color: '#333' },
+  recommendedItem: {
+    width: 140,
+    marginRight: 12,
+    backgroundColor: "#fafafa",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  recommendedImage: {
+    width: "100%",
+    height: 100,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  recommendedTitle: {
+    fontSize: 13,
+    marginTop: 6,
+    marginHorizontal: 6,
+    textAlign: "center",
+    color: "#333",
+    marginBottom: 10,
+  },
 });

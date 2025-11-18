@@ -23,7 +23,7 @@ export default function RecipeScreen({ route, navigation }) {
   });
   const [loading, setLoading] = useState(true);
 
-  const BASE_URL = "http://192.168.68.56:8080/api";
+  const BASE_URL = "http://192.168.68.51:8080/api";
 
   // 🧊 식자재 불러오기
   const fetchIngredients = useCallback(async () => {
