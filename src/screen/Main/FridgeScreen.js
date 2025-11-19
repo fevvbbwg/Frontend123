@@ -18,7 +18,7 @@ const FridgeScreen = ({ route, navigation }) => {
   const fetchIngredients = useCallback(async () => {
     try {
       const response = await fetch(
-        `http://192.168.68.51:8080/api/ingredient/list?userID=${userID}`
+        `http://192.168.68.53:8080/api/ingredient/list?userID=${userID}`
       );
       const data = await response.json();
 
@@ -110,7 +110,7 @@ const FridgeScreen = ({ route, navigation }) => {
         onPress: async () => {
           try {
             const response = await fetch(
-              `http://192.168.68.51:8080/api/ingredient/delete/${id}`,
+              `http://192.168.68.53:8080/api/ingredient/delete/${id}`,
               { method: 'DELETE' }
             );
 

@@ -23,6 +23,9 @@ import IngredientEditScreen from './src/screen/Main/IngredientEditScreen';
 import RecipeScreen from './src/screen/Recipe/RecipeScreen';
 import CustomRecipeScreen from './src/screen/Recipe/CustomRecipeScreen';
 import MyRecipesScreen from './src/screen/Mypage/MyRecipesScreen';
+import EditCustomRecipe from './src/screen/Mypage/EditCustomRecipe';
+import RecommendScreen from './src/screen/Recipe/RecommendScreen';
+
 
 
 const Stack = createNativeStackNavigator();
@@ -116,6 +119,17 @@ const App = () => {
           component={MyRecipesScreen}
           options={{ title: '내가 만든 레시피' }}
         />
+        <Stack.Screen
+          name="EditCustomRecipe"
+          component={EditCustomRecipe}
+          options={{ title: "레시피 수정" }}
+        />
+        <Stack.Screen
+          name="RecommendScreen"
+          component={RecommendScreen}
+          options={{ title:'레시피 추천'}}
+        />
+
 
       </Stack.Navigator>
     </NavigationContainer>

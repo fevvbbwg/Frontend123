@@ -46,7 +46,7 @@ const MainScreen = () => {
   // 오늘의 레시피 불러오기
   const fetchTodayRecipes = async () => {
     try {
-      const response = await fetch('http://192.168.68.51:8080/api/recipes/today');
+      const response = await fetch('http://192.168.68.53:8080/api/recipes/today');
       if (!response.ok) throw new Error(`HTTP status ${response.status}`);
       const data = await response.json();
       setRecipes(prev => ({ ...prev, today: Array.isArray(data) ? data : [] }));
@@ -59,7 +59,7 @@ const MainScreen = () => {
   // 추천 레시피 불러오기
   const fetchPopularRecipes = async () => {
     try {
-      const response = await fetch('http://192.168.68.51:8080/api/recipes/popular');
+      const response = await fetch('http://192.168.68.53:8080/api/recipes/popular');
       if (!response.ok) throw new Error(`HTTP status ${response.status}`);
       const data = await response.json();
       setRecipes(prev => ({ ...prev, popular: Array.isArray(data) ? data : [] }));

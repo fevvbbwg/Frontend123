@@ -19,7 +19,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
   const saveRecipeHistory = async (userID, title, recipeId, imageUrl) => {
     if (!userID || !title) return;
     try {
-      await axios.post("http://192.168.68.51:8080/api/recipe-history/save", {
+      await axios.post("http://192.168.68.53:8080/api/recipe-history/save", {
         userID,
         title,
         recipeId: recipeId?.toString(),
@@ -32,13 +32,13 @@ const RecipeDetailScreen = ({ route, navigation }) => {
     const fetchRecipe = async () => {
       try {
         let url = isUserRecipe
-          ? `http://192.168.68.51:8080/api/user-recipes/${id}`
-          : `http://192.168.68.51:8080/api/recipes/${id}`;
+          ? `http://192.168.68.53:8080/api/user-recipes/${id}`
+          : `http://192.168.68.53:8080/api/recipes/${id}`;
 
         const res = await fetch(url);
         const data = await res.json();
 
-        if (isUserRecipe) {
+        /*if (isUserRecipe) {
           setRecipe({
             rcpSno: data.id,
             rcpTtl: data.title,
@@ -54,7 +54,39 @@ const RecipeDetailScreen = ({ route, navigation }) => {
           });
         } else {
           setRecipe(data);
+        }*/
+        if (isUserRecipe) {
+
+          let finalImage = null;
+
+          // 1) Base64가 있다면 → data:image 형식으로 변환
+          if (data.imageBase64) {
+            finalImage = `data:image/jpeg;base64,${data.imageBase64}`;
+          }
+
+          // 2) Base64가 없고 기존 방식의 imageUrl이 있다면 → 그대로 사용
+          else if (data.imageUrl) {
+            finalImage = data.imageUrl;
+          }
+
+          setRecipe({
+            rcpSno: data.id,
+            rcpTtl: data.title,
+            rcpImgUrl: finalImage,  // ⭐ 여기만 바뀜
+            ckgIpdc: data.description,
+            ckgMtrlCn: data.ingredients,
+            rgtrNm: data.userId,
+            ckgTimeNm: data.cookingTime,
+            ckgInbunNm: data.servings,
+            ckgDodfNm: "정보 없음",
+            ckgKndActoNm: data.category,
+            steps: data.steps,
+          });
+
+        } else {
+          setRecipe(data);
         }
+
 
         const searchTitle = isUserRecipe ? data.title : data.rcpTtl;
 
@@ -82,7 +114,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
 
     const fetchRecommended = async () => {
       try {
-        const res = await fetch("http://192.168.68.51:8080/api/recipes/today");
+        const res = await fetch("http://192.168.68.53:8080/api/recipes/today");
         if (res.ok) setRecommendedRecipes(await res.json());
       } catch {}
     };

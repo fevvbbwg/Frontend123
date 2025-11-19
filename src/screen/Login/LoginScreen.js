@@ -12,7 +12,7 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await fetch('http://192.168.68.51:8080/api/users/login', {
+      const response = await fetch('http://192.168.68.53:8080/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userID, password }),
@@ -40,7 +40,7 @@ const LoginScreen = ({ navigation }) => {
 
   return (
         <View style={styles.container}>
-            <Text style={styles.title}>Recipe Recommend</Text>
+            <Text style={styles.title}>ScanCook</Text>
 
             <TextInput
                 placeholder="아이디"

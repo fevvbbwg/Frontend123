@@ -22,7 +22,7 @@ const PasswordChange = ({ navigation, route }) => {
         }
 
         try {
-            const response = await fetch('http://192.168.68.51:8080/api/users/change-password', {
+            const response = await fetch('http://192.168.68.53:8080/api/users/change-password', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
