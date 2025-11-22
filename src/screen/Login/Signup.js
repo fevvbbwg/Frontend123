@@ -31,9 +31,6 @@ const Signup = () => {
   const [isCheckingUserID, setIsCheckingUserID] = useState(false);
 
   const handleChange = (name, value) => {
-    if (name === 'username') {
-      value = value.replace(/[^가-힣a-zA-Z0-9]/g, '');
-    }
     if (name === 'phone') {
       value = value.replace(/[^0-9]/g, '');
       if (value.length < 4) {
@@ -47,16 +44,33 @@ const Signup = () => {
     setForm({ ...form, [name]: value });
   };
 
+  // ⭐ 날짜 하루 밀림 완전 해결
   const handleDateChange = (event, selectedDate) => {
-    setShowPicker(Platform.OS === 'ios');
-    if (selectedDate) setBirthdate(selectedDate);
+    setShowPicker(false);
+    if (!selectedDate) return;
+
+    const fixed = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate()
+    );
+
+    setBirthdate(fixed);
+  };
+
+  // ⭐ YYYY-MM-DD 출력 함수 (UTC 영향 없음)
+  const formatDate = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   const checkUserIDAvailability = async () => {
     if (isCheckingUserID) return;
     setIsCheckingUserID(true);
     try {
-      const res = await fetch(`http://192.168.68.53:8080/api/users/check-userID`, {
+      const res = await fetch(`http://192.168.68.54:8080/api/users/check-userID`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userID: form.userID }),
@@ -108,11 +122,11 @@ const Signup = () => {
       email: form.email,
       password: form.password,
       phone: form.phone,
-      birthdate: birthdate.toISOString().split('T')[0],
+      birthdate: formatDate(birthdate),   // ⭐ 여기 수정: toISOString() 제거
     };
 
     try {
-      const response = await fetch('http://192.168.68.53:8080/api/users/register', {
+      const response = await fetch('http://192.168.68.54:8080/api/users/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -137,7 +151,6 @@ const Signup = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>회원가입</Text>
 
-      {/* 아이디 */}
       <TextInput
         style={styles.input}
         placeholder="아이디를 입력하세요"
@@ -145,11 +158,11 @@ const Signup = () => {
         value={form.userID}
         onChangeText={(text) => handleChange('userID', text)}
       />
+
       <TouchableOpacity style={styles.checkButton} onPress={checkUserIDAvailability}>
         <Text style={styles.checkButtonText}>아이디 중복 확인</Text>
       </TouchableOpacity>
 
-      {/* 이름 */}
       <TextInput
         style={styles.input}
         placeholder="이름을 입력하세요"
@@ -158,7 +171,6 @@ const Signup = () => {
         onChangeText={(text) => handleChange('username', text)}
       />
 
-      {/* 비밀번호 */}
       <TextInput
         style={styles.input}
         placeholder="비밀번호를 입력하세요"
@@ -167,6 +179,7 @@ const Signup = () => {
         value={form.password}
         onChangeText={(text) => handleChange('password', text)}
       />
+
       <TextInput
         style={styles.input}
         placeholder="비밀번호를 다시 입력하세요"
@@ -176,7 +189,6 @@ const Signup = () => {
         onChangeText={(text) => handleChange('confirmPassword', text)}
       />
 
-      {/* 이메일 */}
       <TextInput
         style={styles.input}
         placeholder="이메일을 입력하세요"
@@ -186,7 +198,6 @@ const Signup = () => {
         keyboardType="email-address"
       />
 
-      {/* 전화번호 */}
       <TextInput
         style={styles.input}
         placeholder="전화번호를 입력하세요 (010-XXXX-XXXX)"
@@ -196,12 +207,10 @@ const Signup = () => {
         keyboardType="phone-pad"
       />
 
-      {/* 생년월일 */}
       <TouchableOpacity style={styles.datePickerButton} onPress={() => setShowPicker(true)}>
-        <Text style={styles.datePickerText}>
-          📅 생년월일: {birthdate.toISOString().split('T')[0]}
-        </Text>
+        <Text style={styles.datePickerText}>📅 생년월일: {formatDate(birthdate)}</Text>
       </TouchableOpacity>
+
       {showPicker && (
         <DateTimePicker
           value={birthdate}
@@ -211,13 +220,13 @@ const Signup = () => {
         />
       )}
 
-      {/* 회원가입 버튼 */}
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>회원가입</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

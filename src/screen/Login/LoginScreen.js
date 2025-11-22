@@ -12,7 +12,7 @@ const LoginScreen = ({ navigation }) => {
     }
 
     try {
-      const response = await fetch('http://192.168.68.53:8080/api/users/login', {
+      const response = await fetch('http://192.168.68.54:8080/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userID, password }),

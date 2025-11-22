@@ -16,7 +16,7 @@ export default function MyRecipesScreen({ navigation }) {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const BASE_URL = "http://192.168.68.53:8080";
+  const BASE_URL = "http://192.168.68.54:8080";
 
   // 이미지 처리 함수 (Base64 + URL 호환)
   const getRecipeImage = (item) => {

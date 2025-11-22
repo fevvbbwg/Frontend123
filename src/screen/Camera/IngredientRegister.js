@@ -13,7 +13,7 @@ const IngredientRegister = ({ route, navigation }) => {
   const [category, setCategory] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
   const [image, setImage] = useState(productData?.image || null);
-  const [note, setNote] = useState(productData?.note || ''); // ✅ note 추가
+  const [note, setNote] = useState(productData?.note || '');
 
   const categories = [
     '채소','과일','유제품','육류','수산물','곡류','냉동식품','음료','조미료','기타',
@@ -51,7 +51,7 @@ const IngredientRegister = ({ route, navigation }) => {
     }
 
     try {
-      const response = await fetch('http://192.168.68.53:8080/api/ingredient/save', {
+      const response = await fetch('http://192.168.68.54:8080/api/ingredient/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,13 +62,23 @@ const IngredientRegister = ({ route, navigation }) => {
           expirationDate,
           image,
           userID,
-          note, // ✅ note 포함
+          note,
         }),
       });
 
       if (response.ok) {
         Alert.alert('등록 완료', `${name} 이(가) 냉장고에 추가되었습니다!`, [
-          { text: '확인', onPress: () => navigation.navigate('FridgeScreen', { userID }) },
+          {
+            text: '확인',
+            onPress: () =>
+              navigation.reset({
+                index: 1,
+                routes: [
+                  { name: 'MainScreen', params: { userID } },
+                  { name: 'FridgeScreen', params: { userID } },
+                ],
+              })
+          },
         ]);
       } else {
         Alert.alert('오류', '등록에 실패했습니다.');
@@ -128,7 +138,10 @@ const IngredientRegister = ({ route, navigation }) => {
         <Text style={styles.buttonText}>등록하기</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.button, { backgroundColor: '#555' }]} onPress={() => navigation.goBack()}>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: '#555' }]}
+        onPress={() => navigation.goBack()}
+      >
         <Text style={styles.buttonText}>뒤로가기</Text>
       </TouchableOpacity>
     </ScrollView>

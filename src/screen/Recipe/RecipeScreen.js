@@ -23,7 +23,7 @@ export default function RecipeScreen({ route, navigation }) {
   });
   const [loading, setLoading] = useState(true);
 
-  const BASE_URL = "http://192.168.68.53:8080/api";
+  const BASE_URL = "http://192.168.68.54:8080/api";
 
   // 🧊 식자재 불러오기
   const fetchIngredients = useCallback(async () => {
@@ -73,6 +73,7 @@ export default function RecipeScreen({ route, navigation }) {
             lower.includes("생선") ||
             lower.includes("고등어") ||
             lower.includes("연어") ||
+            lower.includes("조기") ||
             lower.includes("광어")
           );
 
@@ -81,11 +82,12 @@ export default function RecipeScreen({ route, navigation }) {
             lower.includes("과일") ||
             lower.includes("딸기") ||
             lower.includes("사과") ||
-            lower.includes("참외") ||
-            lower.includes("수박") ||
+            lower.includes("자몽") ||
+            lower.includes("토마토") ||
             lower.includes("바나나") ||
             lower.includes("체리") ||
-            lower.includes("후르츠") ||
+            lower.includes("망고") ||
+            lower.includes("키위") ||
             lower.includes("포도")
           );
 

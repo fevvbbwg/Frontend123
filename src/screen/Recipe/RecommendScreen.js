@@ -13,7 +13,7 @@ export default function RecommendScreen({ route, navigation }) {
   const [selected, setSelected] = useState([]);   // ⭐ 사용자가 선택한 식재료
   const [recipes, setRecipes] = useState([]);
 
-  const BASE_URL = "http://192.168.68.53:8080/api";
+  const BASE_URL = "http://192.168.68.54:8080/api";
 
   // 🟦 내 식재료 조회
   const fetchIngredients = useCallback(async () => {

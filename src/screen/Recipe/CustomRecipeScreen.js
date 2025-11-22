@@ -76,7 +76,7 @@ const CustomRecipeScreen = ({ navigation }) => {
 
       try {
         const res = await axios.get(
-          "http://192.168.68.53:8080/api/ingredient/list",
+          "http://192.168.68.54:8080/api/ingredient/list",
           { params: { userID } }
         );
         setFridgeIngredients(res.data);
@@ -141,7 +141,7 @@ const CustomRecipeScreen = ({ navigation }) => {
     try {
       const userID = await AsyncStorage.getItem("userID");
 
-      await axios.post("http://192.168.68.53:8080/api/user-recipes/create", {
+      await axios.post("http://192.168.68.54:8080/api/user-recipes/create", {
         userId: userID,
         title,
         description,

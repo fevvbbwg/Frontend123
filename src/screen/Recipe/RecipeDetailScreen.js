@@ -19,7 +19,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
   const saveRecipeHistory = async (userID, title, recipeId, imageUrl) => {
     if (!userID || !title) return;
     try {
-      await axios.post("http://192.168.68.53:8080/api/recipe-history/save", {
+      await axios.post("http://192.168.68.54:8080/api/recipe-history/save", {
         userID,
         title,
         recipeId: recipeId?.toString(),
@@ -32,8 +32,8 @@ const RecipeDetailScreen = ({ route, navigation }) => {
     const fetchRecipe = async () => {
       try {
         let url = isUserRecipe
-          ? `http://192.168.68.53:8080/api/user-recipes/${id}`
-          : `http://192.168.68.53:8080/api/recipes/${id}`;
+          ? `http://192.168.68.54:8080/api/user-recipes/${id}`
+          : `http://192.168.68.54:8080/api/recipes/${id}`;
 
         const res = await fetch(url);
         const data = await res.json();
@@ -114,7 +114,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
 
     const fetchRecommended = async () => {
       try {
-        const res = await fetch("http://192.168.68.53:8080/api/recipes/today");
+        const res = await fetch("http://192.168.68.54:8080/api/recipes/today");
         if (res.ok) setRecommendedRecipes(await res.json());
       } catch {}
     };
