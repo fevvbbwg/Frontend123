@@ -76,7 +76,7 @@ const CustomRecipeScreen = ({ navigation }) => {
 
       try {
         const res = await axios.get(
-          "http://192.168.68.54:8080/api/ingredient/list",
+          "",
           { params: { userID } }
         );
         setFridgeIngredients(res.data);
@@ -134,14 +134,14 @@ const CustomRecipeScreen = ({ navigation }) => {
 // 🔥 레시피 저장
   const saveRecipe = async () => {
     if (!title || selectedIngredients.length === 0 || !steps) {
-      Alert.alert("오류", "제목, 재료, 조리순서는 必 입력!");
+      Alert.alert("오류", "제목, 재료, 조리순서는 필수 입력입니다.");
       return;
     }
 
     try {
       const userID = await AsyncStorage.getItem("userID");
 
-      await axios.post("http://192.168.68.54:8080/api/user-recipes/create", {
+      await axios.post("", {
         userId: userID,
         title,
         description,

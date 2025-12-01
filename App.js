@@ -25,6 +25,7 @@ import CustomRecipeScreen from './src/screen/Recipe/CustomRecipeScreen';
 import MyRecipesScreen from './src/screen/Mypage/MyRecipesScreen';
 import EditCustomRecipe from './src/screen/Mypage/EditCustomRecipe';
 import RecommendScreen from './src/screen/Recipe/RecommendScreen';
+import UpdateUserScreen from './src/screen/Mypage/UpdateUserScreen';
 
 
 
@@ -128,6 +129,11 @@ const App = () => {
           name="RecommendScreen"
           component={RecommendScreen}
           options={{ title:'레시피 추천'}}
+        />
+        <Stack.Screen
+          name="UpdateUserScreen"
+          component={UpdateUserScreen}
+          options={{ title:'정보 수정'}}
         />
 
 

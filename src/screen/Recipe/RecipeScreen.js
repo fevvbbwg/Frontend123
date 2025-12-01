@@ -23,17 +23,16 @@ export default function RecipeScreen({ route, navigation }) {
   });
   const [loading, setLoading] = useState(true);
 
-  const BASE_URL = "http://192.168.68.54:8080/api";
+  const BASE_URL = "";
 
-  // 🧊 식자재 불러오기
+  // 🧊 내 식자재 불러오기
   const fetchIngredients = useCallback(async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/ingredient/list`, {
+      const res = await axios.get(`${BASE_URL}`, {
         params: { userID },
       });
       setIngredients(res.data);
     } catch (error) {
-      console.error(error);
       Alert.alert("오류", "식자재를 불러오지 못했습니다.");
     }
   }, [userID]);
@@ -41,19 +40,17 @@ export default function RecipeScreen({ route, navigation }) {
   // 🌿 제철 요리
   const fetchSeasonal = useCallback(async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/recipes/all`, {
+      const res = await axios.get(`${BASE_URL}`, {
         params: { type: "seasonal" },
       });
       setSeasonalRecipes(res.data);
-    } catch (error) {
-      console.error("제철 레시피 불러오기 실패:", error);
-    }
+    } catch (error) {}
   }, []);
 
   // 🍖 카테고리별 요리
   const fetchCategory = useCallback(async (type) => {
     try {
-      const res = await axios.get(`${BASE_URL}/recipes/all`, {
+      const res = await axios.get(`${BASE_URL}`, {
         params: { type },
       });
 
@@ -79,25 +76,31 @@ export default function RecipeScreen({ route, navigation }) {
 
         if (type === "fruit")
           return (
-            lower.includes("과일") ||
             lower.includes("딸기") ||
             lower.includes("사과") ||
-            lower.includes("자몽") ||
-            lower.includes("토마토") ||
-            lower.includes("바나나") ||
-            lower.includes("체리") ||
-            lower.includes("망고") ||
+            lower.includes("배") ||
+            lower.includes("포도") ||
+            lower.includes("오렌지") ||
+            lower.includes("파인애플") ||
+            lower.includes("블루베리") ||
             lower.includes("키위") ||
-            lower.includes("포도")
+            lower.includes("복숭아") ||
+            lower.includes("망고") ||
+            lower.includes("바나나") ||
+            lower.includes("토마토") ||
+            lower.includes("레몬") ||
+            lower.includes("라임") ||
+            lower.includes("멜론") ||
+            lower.includes("수박") ||
+            lower.includes("체리") ||
+            lower.includes("자몽")
           );
 
         return true;
       });
 
       setCategories((prev) => ({ ...prev, [type]: filtered }));
-    } catch (error) {
-      console.error(`${type} 레시피 불러오기 실패:`, error);
-    }
+    } catch (error) {}
   }, []);
 
   // 🔄 데이터 로드
@@ -106,9 +109,9 @@ export default function RecipeScreen({ route, navigation }) {
       await fetchIngredients();
       await fetchSeasonal();
 
-      setTimeout(() => fetchCategory("meat"), 300);
-      setTimeout(() => fetchCategory("fish"), 600);
-      setTimeout(() => fetchCategory("fruit"), 900);
+      setTimeout(() => fetchCategory("meat"), 200);
+      setTimeout(() => fetchCategory("fish"), 400);
+      setTimeout(() => fetchCategory("fruit"), 600);
 
       setLoading(false);
     };
@@ -117,14 +120,14 @@ export default function RecipeScreen({ route, navigation }) {
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" />;
 
-  // 🔹 카테고리 섹션
+  // 🔹 카테고리 섹션 렌더
   const renderCategorySection = (title, data, type) => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.subtitle}>{title}</Text>
 
         <TouchableOpacity
-          onPress={() => navigation.navigate("MoreRecipesScreen", { type })}
+          onPress={() => navigation.navigate("MoreRecipesScreen", { section: type })}
         >
           <Text style={styles.moreText}>더보기 ▸</Text>
         </TouchableOpacity>
@@ -133,11 +136,16 @@ export default function RecipeScreen({ route, navigation }) {
       {data.length > 0 ? (
         <FlatList
           data={data}
-          keyExtractor={(_, idx) => idx.toString()}
+          keyExtractor={(item, idx) => idx.toString()}
           horizontal
           showsHorizontalScrollIndicator={false}
           renderItem={({ item }) => {
-            const id = item.rcpSno || item.id;
+            const id =
+              item.rcpSno ??
+              item.id ??
+              item.recipeId ??
+              item.recipe_id;
+
             const title = item.rcpTtl || item.title || "제목 없음";
             const image = item.rcpImgUrl || item.imgUrl || item.imageUrl;
 
@@ -175,8 +183,7 @@ export default function RecipeScreen({ route, navigation }) {
       <Text style={styles.title}>🍽️ 나만의 레시피 추천</Text>
 
       {/* 🥕 내 식자재 */}
-      <Text style={styles.subtitle}>🥕 내 냉장고 속 식자재</Text>
-
+      <Text style={styles.subtitle}>내 냉장고 속 식자재</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {ingredients.length > 0 ? (
           ingredients.map((item, idx) => (
@@ -189,12 +196,12 @@ export default function RecipeScreen({ route, navigation }) {
         )}
       </ScrollView>
 
-      {/* 🤖 추천받기 버튼 → RecommendScreen 이동 */}
+      {/* 🤖 추천받기 버튼 */}
       <TouchableOpacity
         style={styles.recommendBtn}
         onPress={() => navigation.navigate("RecommendScreen", { userID })}
       >
-        <Text style={styles.recommendText}>🤖 내 식자재로 추천받기</Text>
+        <Text style={styles.recommendText}>내 식자재로 추천받기</Text>
       </TouchableOpacity>
 
       {/* 📚 내가 만든 레시피 */}
@@ -202,7 +209,7 @@ export default function RecipeScreen({ route, navigation }) {
         style={styles.myRecipeBtn}
         onPress={() => navigation.navigate("MyRecipesScreen", { userID })}
       >
-        <Text style={styles.myRecipeText}>📚 내가 만든 레시피 보기</Text>
+        <Text style={styles.myRecipeText}>내가 만든 레시피 보기</Text>
       </TouchableOpacity>
 
       {/* 🧂 새 레시피 만들기 */}
@@ -210,7 +217,7 @@ export default function RecipeScreen({ route, navigation }) {
         style={styles.makeBtn}
         onPress={() => navigation.navigate("CustomRecipeScreen", { userID })}
       >
-        <Text style={styles.makeText}>🧂 새 레시피 만들기</Text>
+        <Text style={styles.makeText}>새 레시피 만들기</Text>
       </TouchableOpacity>
 
       {/* 카테고리 */}
@@ -271,13 +278,11 @@ const styles = StyleSheet.create({
     padding: 15,
     marginTop: 20,
   },
-
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
   },
-
   recipeCard: { width: 120, marginRight: 10, alignItems: "center" },
   recipeImg: { width: 110, height: 80, borderRadius: 10 },
   noImg: {

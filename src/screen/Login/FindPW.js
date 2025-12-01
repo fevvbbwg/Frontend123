@@ -15,7 +15,7 @@ const FindPW = ({ navigation }) => {
 
         try {
             // 실제 IP 주소 확인 필요
-            const response = await axios.post('http://192.168.68.54:8080/api/users/verify-user', {
+            const response = await axios.post('', {
                 userID,
                 username,
                 email,

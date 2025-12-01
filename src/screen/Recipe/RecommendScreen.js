@@ -10,15 +10,15 @@ export default function RecommendScreen({ route, navigation }) {
 
   const [loading, setLoading] = useState(false);
   const [ingredients, setIngredients] = useState([]);
-  const [selected, setSelected] = useState([]);   // ⭐ 사용자가 선택한 식재료
+  const [selected, setSelected] = useState([]);
   const [recipes, setRecipes] = useState([]);
 
-  const BASE_URL = "http://192.168.68.54:8080/api";
+  const BASE_URL = "";
 
   // 🟦 내 식재료 조회
   const fetchIngredients = useCallback(async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/ingredient/list`, {
+      const res = await axios.get(`${BASE_URL}`, {
         params: { userID },
       });
       setIngredients(res.data);
@@ -32,8 +32,8 @@ export default function RecommendScreen({ route, navigation }) {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${BASE_URL}/recommend?userID=${userID}`,
-        selected   // ⭐ JSON 배열로 보냄
+        `${BASE_URL}`,
+        selected
       );
       setRecipes(res.data);
     } catch (e) {
@@ -42,17 +42,19 @@ export default function RecommendScreen({ route, navigation }) {
     setLoading(false);
   };
 
-
-  // 🟦 식재료 선택 토글
+  // 🟦 식재료 선택 토글 (name + note 포함)
   const toggleSelect = (item) => {
-    if (selected.includes(item.name)) {
-      setSelected(selected.filter((i) => i !== item.name));
+    const keywords = [item.name, item.note].filter(Boolean); // 🔥 note 사용
+
+    const exists = keywords.some(k => selected.includes(k));
+
+    if (exists) {
+      setSelected(selected.filter(s => !keywords.includes(s)));
     } else {
-      setSelected([...selected, item.name]);
+      setSelected([...selected, ...keywords]);
     }
   };
 
-  // 🟦 최초 1회 식재료 불러오기
   useEffect(() => {
     fetchIngredients();
   }, [fetchIngredients]);
@@ -68,7 +70,9 @@ export default function RecommendScreen({ route, navigation }) {
           {/* ⭐ 식재료 목록 */}
           <View style={styles.ingBox}>
             {ingredients.map((item, idx) => {
-              const isSelected = selected.includes(item.name);
+              const keywords = [item.name, item.note].filter(Boolean); // 🔥 여기도 note
+              const isSelected = keywords.some(k => selected.includes(k));
+
               return (
                 <TouchableOpacity
                   key={idx}

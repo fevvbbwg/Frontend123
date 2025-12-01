@@ -53,7 +53,7 @@ const EditCustomRecipeScreen = ({ route, navigation }) => {
       if (!userID) return;
 
       try {
-        const res = await axios.get("http://192.168.68.54:8080/api/ingredient/list", {
+        const res = await axios.get("", {
           params: { userID }
         });
         setFridgeIngredients(res.data);
@@ -101,7 +101,7 @@ const EditCustomRecipeScreen = ({ route, navigation }) => {
 
     try {
       await axios.put(
-        `http://192.168.68.54:8080/api/user-recipes/update/${recipe.id}`,
+        ``,
         {
           title,
           description,

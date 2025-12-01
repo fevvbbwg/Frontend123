@@ -16,7 +16,7 @@ export default function MyRecipesScreen({ navigation }) {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const BASE_URL = "http://192.168.68.54:8080";
+  const BASE_URL = "";
 
   // 이미지 처리 함수 (Base64 + URL 호환)
   const getRecipeImage = (item) => {
@@ -40,7 +40,7 @@ export default function MyRecipesScreen({ navigation }) {
         }
 
         const res = await axios.get(
-          `${BASE_URL}/api/user-recipes/list/${userID}`
+          `${BASE_URL}`
         );
 
         setRecipes(res.data);
@@ -66,7 +66,7 @@ export default function MyRecipesScreen({ navigation }) {
           style: "destructive",
           onPress: async () => {
             try {
-              await axios.delete(`${BASE_URL}/api/user-recipes/delete/${id}`);
+              await axios.delete(`${BASE_URL}`);
               setRecipes((prev) => prev.filter((item) => item.id !== id));
             } catch (err) {
               console.error("삭제 실패:", err);

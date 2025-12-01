@@ -51,7 +51,7 @@ const IngredientRegister = ({ route, navigation }) => {
     }
 
     try {
-      const response = await fetch('http://192.168.68.54:8080/api/ingredient/save', {
+      const response = await fetch('', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

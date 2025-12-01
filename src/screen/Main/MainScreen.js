@@ -12,12 +12,11 @@ import {
   FlatList,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { SafeAreaView } from 'react-native-safe-area-context';   // 🔥 SafeAreaView 추가
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const screenWidth = Dimensions.get('window').width;
-const cardWidth = (screenWidth - 40) / 2 - 10;
 
 const TABS = [
   { label: '냉장고', icon: 'snow-outline', screen: 'FridgeScreen' },
@@ -29,9 +28,18 @@ const TABS = [
 const MainScreen = () => {
   const navigation = useNavigation();
 
-  const [recipes, setRecipes] = useState({ today: [], popular: [] });
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentUserID, setCurrentUserID] = useState(null);
+
+  const [recipes, setRecipes] = useState({
+    today: [],
+    popular: [],
+    simple: [],
+    noodle: [],
+    soup: [],
+    salad: [],
+    side: [],
+  });
 
   useEffect(() => {
     const loadUserID = async () => {
@@ -40,31 +48,23 @@ const MainScreen = () => {
     };
     loadUserID();
 
-    fetchTodayRecipes();
-    fetchPopularRecipes();
+    fetchSection('today', '/today');
+    fetchSection('popular', '/popular');
+    fetchSection('simple', '/simple');
+    fetchSection('noodle', '/noodle');
+    fetchSection('soup', '/soup');
+    fetchSection('salad', '/salad');
+    fetchSection('side', '/side');
   }, []);
 
-  const fetchTodayRecipes = async () => {
+  // 🔥 공통 fetch 함수
+  const fetchSection = async (key, endpoint) => {
     try {
-      const response = await fetch('http://192.168.68.54:8080/api/recipes/today');
-      if (!response.ok) throw new Error(`HTTP status ${response.status}`);
+      const response = await fetch(``);
       const data = await response.json();
-      setRecipes(prev => ({ ...prev, today: Array.isArray(data) ? data : [] }));
-    } catch (error) {
-      console.error('오늘의 레시피 가져오기 실패:', error.message);
-      Alert.alert('네트워크 오류', '오늘의 레시피를 가져오는 데 실패했습니다.');
-    }
-  };
-
-  const fetchPopularRecipes = async () => {
-    try {
-      const response = await fetch('http://192.168.68.54:8080/api/recipes/popular');
-      if (!response.ok) throw new Error(`HTTP status ${response.status}`);
-      const data = await response.json();
-      setRecipes(prev => ({ ...prev, popular: Array.isArray(data) ? data : [] }));
-    } catch (error) {
-      console.error('추천 레시피 가져오기 실패:', error.message);
-      Alert.alert('네트워크 오류', '추천 레시피를 가져오는 데 실패했습니다.');
+      setRecipes(prev => ({ ...prev, [key]: Array.isArray(data) ? data : [] }));
+    } catch (err) {
+      console.error(`${key} 레시피 로드 실패:`, err);
     }
   };
 
@@ -81,10 +81,41 @@ const MainScreen = () => {
     navigation.navigate(screen, { userID: currentUserID || '정보 없음' });
   };
 
-  const handleMore = (sectionLabel) => {
-    const section = sectionLabel === '오늘의 레시피' ? 'today' : 'popular';
-    navigation.navigate('MoreRecipesScreen', { section, userID: currentUserID });
+  const handleMore = (type) => {
+    navigation.navigate('MoreRecipesScreen', { section: type, userID: currentUserID });
   };
+
+  // 🔥 공통 렌더링 UI
+  const renderRecipeRow = (title, dataKey) => (
+    <View style={styles.cardWrapper}>
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          <TouchableOpacity onPress={() => handleMore(dataKey)}>
+            <Text style={styles.moreText}>더보기</Text>
+          </TouchableOpacity>
+        </View>
+
+        <FlatList
+          data={recipes[dataKey]}
+          keyExtractor={(item) => item.rcpSno.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.horizontalCard}
+              onPress={() => navigation.navigate('RecipeDetail', { id: item.rcpSno })}
+            >
+              <Image source={{ uri: item.rcpImgUrl }} style={styles.recipeImage} />
+              <Text style={styles.recipeLabel} numberOfLines={1}>
+                {item.rcpTtl}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -95,10 +126,6 @@ const MainScreen = () => {
           value={searchKeyword}
           onChangeText={setSearchKeyword}
           style={styles.input}
-          returnKeyType="done"
-          blurOnSubmit={false}
-          autoCorrect={false}
-          autoCapitalize="none"
         />
         <TouchableOpacity onPress={handleSearch}>
           <Text style={styles.iconText}>🔍</Text>
@@ -106,68 +133,18 @@ const MainScreen = () => {
         <Text style={[styles.iconText, styles.bell]}>🔔</Text>
       </View>
 
-      {/* 레시피 목록 */}
+      {/* 메인 컨텐츠 */}
       <ScrollView style={styles.content}>
-        {/* 오늘의 레시피 */}
-        <View style={styles.cardWrapper}>
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>오늘의 레시피</Text>
-              <TouchableOpacity onPress={() => handleMore('오늘의 레시피')}>
-                <Text style={styles.moreText}>더보기</Text>
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={recipes.today}
-              keyExtractor={(item) => item.rcpSno.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.horizontalCard}
-                  onPress={() => navigation.navigate('RecipeDetail', { id: item.rcpSno })}
-                >
-                  <Image source={{ uri: item.rcpImgUrl }} style={styles.recipeImage} />
-                  <Text style={styles.recipeLabel} numberOfLines={1} ellipsizeMode="tail">
-                    {item.rcpTtl}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-
-        {/* 추천수 많은 레시피 */}
-        <View style={styles.cardWrapper}>
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>추천수 많은 레시피</Text>
-              <TouchableOpacity onPress={() => handleMore('추천수 많은 레시피')}>
-                <Text style={styles.moreText}>더보기</Text>
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={recipes.popular.slice(0, 4)}
-              keyExtractor={(item) => item.rcpSno.toString()}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.horizontalCard}
-                  onPress={() => navigation.navigate('RecipeDetail', { id: item.rcpSno })}
-                >
-                  <Image source={{ uri: item.rcpImgUrl }} style={styles.recipeImage} />
-                  <Text style={styles.recipeLabel} numberOfLines={1} ellipsizeMode="tail">
-                    {item.rcpTtl}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
+        {renderRecipeRow("오늘의 레시피", "today")}
+        {renderRecipeRow("추천수 많은 레시피", "popular")}
+        {renderRecipeRow("간단요리", "simple")}
+        {renderRecipeRow("면요리", "noodle")}
+        {renderRecipeRow("국/찌개", "soup")}
+        {renderRecipeRow("샐러드", "salad")}
+        {renderRecipeRow("반찬 요리", "side")}
       </ScrollView>
 
-      {/* 🔥 하단 탭바 SafeArea 적용 */}
+      {/* 탭바 */}
       <SafeAreaView edges={['bottom']} style={styles.safeTab}>
         <View style={styles.tabBar}>
           {TABS.map(tab => (
@@ -193,11 +170,10 @@ const styles = StyleSheet.create({
     padding: 10,
     margin: 10,
     borderRadius: 8,
-    backgroundColor: '#f0f0f0'
+    backgroundColor: '#f0f0f0',
   },
 
   input: { flex: 1, paddingHorizontal: 10, fontSize: 16 },
-
   iconText: { fontSize: 18, marginLeft: 10 },
   bell: { marginLeft: 8 },
 
@@ -209,11 +185,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10
+    marginBottom: 10,
   },
 
   sectionTitle: { fontSize: 18, fontWeight: 'bold' },
-
   moreText: { fontSize: 14, color: '#007bff' },
 
   horizontalCard: {
@@ -223,17 +198,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
   },
 
   recipeImage: { width: '100%', height: 100 },
-
   recipeLabel: { padding: 8, fontSize: 14, textAlign: 'center' },
 
-  safeTab: { backgroundColor: '#fff' }, // 🔥 SafeAreaView 스타일
+  safeTab: { backgroundColor: '#fff' },
 
   tabBar: {
     flexDirection: 'row',
@@ -242,7 +212,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#ddd',
     backgroundColor: '#fff',
-    paddingBottom: 20,  // 🔥 홈바 여유 공간 확보
+    paddingBottom: 20,
   },
 
   tabItem: { alignItems: 'center' },

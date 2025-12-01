@@ -14,65 +14,62 @@ const RecipeDetailScreen = ({ route, navigation }) => {
   const [recipe, setRecipe] = useState(null);
   const [videoId, setVideoId] = useState(null);
   const [recommendedRecipes, setRecommendedRecipes] = useState([]);
-  const API_KEY = "AIzaSyBO5YIQ30W4hOrhQPsTW_peEfpAbG52sbg";
+  const API_KEY = "";
 
+  // 🔥 히스토리 저장 함수
   const saveRecipeHistory = async (userID, title, recipeId, imageUrl) => {
-    if (!userID || !title) return;
+    if (!userID) return;   // 제목 체크 제거 🔥
+
     try {
-      await axios.post("http://192.168.68.54:8080/api/recipe-history/save", {
+      await axios.post("", {
         userID,
-        title,
+        title: title || "제목 없음",   // 🔥 안전하게 제목 채워넣기
         recipeId: recipeId?.toString(),
         imageUrl: imageUrl || null,
       });
-    } catch {}
+    } catch (e) {
+      console.log("히스토리 저장 실패:", e?.message);
+    }
   };
+
 
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
         let url = isUserRecipe
-          ? `http://192.168.68.54:8080/api/user-recipes/${id}`
-          : `http://192.168.68.54:8080/api/recipes/${id}`;
+          ? ``
+          : ``;
 
         const res = await fetch(url);
         const data = await res.json();
 
-        /*if (isUserRecipe) {
-          setRecipe({
-            rcpSno: data.id,
-            rcpTtl: data.title,
-            rcpImgUrl: data.imageUrl,
-            ckgIpdc: data.description,
-            ckgMtrlCn: data.ingredients,
-            rgtrNm: data.userId,
-            ckgTimeNm: data.cookingTime,
-            ckgInbunNm: data.servings,
-            ckgDodfNm: "정보 없음",
-            ckgKndActoNm: data.category,
-            steps: data.steps,
-          });
-        } else {
-          setRecipe(data);
-        }*/
+        // ---------------------------------------------------
+        // 🔥 제목 보정
+        // ---------------------------------------------------
+        let title = isUserRecipe ? data.title : data.rcpTtl;
+        if (!title || title.trim() === "") {
+          title = data.rcpTtl || data.title || "제목 없음";
+        }
+
+        // ---------------------------------------------------
+        // 🔥 이미지 보정 (null 방지)
+        // ---------------------------------------------------
+        let img = data.rcpImgUrl || data.imgUrl || null;
+
         if (isUserRecipe) {
+          img = data.imageBase64
+            ? `data:image/jpeg;base64,${data.imageBase64}`
+            : data.imageUrl;
+        }
 
-          let finalImage = null;
-
-          // 1) Base64가 있다면 → data:image 형식으로 변환
-          if (data.imageBase64) {
-            finalImage = `data:image/jpeg;base64,${data.imageBase64}`;
-          }
-
-          // 2) Base64가 없고 기존 방식의 imageUrl이 있다면 → 그대로 사용
-          else if (data.imageUrl) {
-            finalImage = data.imageUrl;
-          }
-
+        // ---------------------------------------------------
+        // 🔥 recipe state 세팅
+        // ---------------------------------------------------
+        if (isUserRecipe) {
           setRecipe({
             rcpSno: data.id,
             rcpTtl: data.title,
-            rcpImgUrl: finalImage,  // ⭐ 여기만 바뀜
+            rcpImgUrl: img,
             ckgIpdc: data.description,
             ckgMtrlCn: data.ingredients,
             rgtrNm: data.userId,
@@ -82,30 +79,32 @@ const RecipeDetailScreen = ({ route, navigation }) => {
             ckgKndActoNm: data.category,
             steps: data.steps,
           });
-
         } else {
           setRecipe(data);
         }
 
+        // ---------------------------------------------------
+        // 🔥 유튜브 영상 검색
+        // ---------------------------------------------------
+        const query = encodeURIComponent(title + " 레시피");
+        const ytRes = await fetch(
+          ``
+        );
+        const ytData = await ytRes.json();
+        if (ytData.items?.length) setVideoId(ytData.items[0].id.videoId);
 
-        const searchTitle = isUserRecipe ? data.title : data.rcpTtl;
-
-        if (searchTitle) {
-          const query = encodeURIComponent(searchTitle + " 레시피");
-          const ytRes = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&maxResults=1&key=${API_KEY}`
-          );
-          const ytData = await ytRes.json();
-          if (ytData.items?.length) setVideoId(ytData.items[0].id.videoId);
-        }
-
+        // ---------------------------------------------------
+        // 🔥 히스토리 저장
+        // ---------------------------------------------------
         const userID = await AsyncStorage.getItem("userID");
+        const rid = isUserRecipe ? data.id : data.rcpSno;
+
         if (userID) {
-          const img = isUserRecipe ? data.imageUrl : data.rcpImgUrl;
-          const rid = isUserRecipe ? data.id : data.rcpSno;
-          await saveRecipeHistory(userID, searchTitle, rid, img);
+          await saveRecipeHistory(userID, title, rid, img);
         }
+
       } catch (error) {
+        console.log(error);
         Alert.alert("오류", "레시피 정보를 불러오지 못했습니다.");
       }
     };
@@ -114,13 +113,13 @@ const RecipeDetailScreen = ({ route, navigation }) => {
 
     const fetchRecommended = async () => {
       try {
-        const res = await fetch("http://192.168.68.54:8080/api/recipes/today");
+        const res = await fetch("");
         if (res.ok) setRecommendedRecipes(await res.json());
       } catch {}
     };
-
     fetchRecommended();
   }, [id, isUserRecipe]);
+
 
   if (!recipe)
     return (
@@ -152,12 +151,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
       {recipe.rcpImgUrl ? (
         <Image source={{ uri: recipe.rcpImgUrl }} style={styles.mainImage} />
       ) : (
-        <View
-          style={[
-            styles.mainImage,
-            { backgroundColor: "#eee", justifyContent: "center", alignItems: "center" },
-          ]}
-        >
+        <View style={[styles.mainImage, { backgroundColor: "#eee", justifyContent: "center", alignItems: "center" }]}>
           <Text style={{ color: "#888" }}>이미지 없음</Text>
         </View>
       )}
@@ -212,9 +206,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
         style={styles.youtubeButton}
         onPress={() =>
           Linking.openURL(
-            `https://www.youtube.com/results?search_query=${encodeURIComponent(
-              recipe.rcpTtl + " 레시피"
-            )}`
+            `https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.rcpTtl + " 레시피")}`
           )
         }
       >

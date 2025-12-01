@@ -8,6 +8,9 @@ import {
   Alert,
   Platform,
   ScrollView,
+  KeyboardAvoidingView,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
@@ -44,7 +47,6 @@ const Signup = () => {
     setForm({ ...form, [name]: value });
   };
 
-  // ⭐ 날짜 하루 밀림 완전 해결
   const handleDateChange = (event, selectedDate) => {
     setShowPicker(false);
     if (!selectedDate) return;
@@ -54,11 +56,9 @@ const Signup = () => {
       selectedDate.getMonth(),
       selectedDate.getDate()
     );
-
     setBirthdate(fixed);
   };
 
-  // ⭐ YYYY-MM-DD 출력 함수 (UTC 영향 없음)
   const formatDate = (date) => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -70,7 +70,7 @@ const Signup = () => {
     if (isCheckingUserID) return;
     setIsCheckingUserID(true);
     try {
-      const res = await fetch(`http://192.168.68.54:8080/api/users/check-userID`, {
+      const res = await fetch(``, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userID: form.userID }),
@@ -122,11 +122,11 @@ const Signup = () => {
       email: form.email,
       password: form.password,
       phone: form.phone,
-      birthdate: formatDate(birthdate),   // ⭐ 여기 수정: toISOString() 제거
+      birthdate: formatDate(birthdate),
     };
 
     try {
-      const response = await fetch('http://192.168.68.54:8080/api/users/register', {
+      const response = await fetch('', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -148,85 +148,95 @@ const Signup = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>회원가입</Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>회원가입</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="아이디를 입력하세요"
-        placeholderTextColor="#999"
-        value={form.userID}
-        onChangeText={(text) => handleChange('userID', text)}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="아이디를 입력하세요"
+            placeholderTextColor="#999"
+            value={form.userID}
+            onChangeText={(text) => handleChange('userID', text)}
+          />
 
-      <TouchableOpacity style={styles.checkButton} onPress={checkUserIDAvailability}>
-        <Text style={styles.checkButtonText}>아이디 중복 확인</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.checkButton} onPress={checkUserIDAvailability}>
+            <Text style={styles.checkButtonText}>아이디 중복 확인</Text>
+          </TouchableOpacity>
 
-      <TextInput
-        style={styles.input}
-        placeholder="이름을 입력하세요"
-        placeholderTextColor="#999"
-        value={form.username}
-        onChangeText={(text) => handleChange('username', text)}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="이름을 입력하세요"
+            placeholderTextColor="#999"
+            value={form.username}
+            onChangeText={(text) => handleChange('username', text)}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="비밀번호를 입력하세요"
-        placeholderTextColor="#999"
-        secureTextEntry
-        value={form.password}
-        onChangeText={(text) => handleChange('password', text)}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="비밀번호를 입력하세요"
+            secureTextEntry
+            placeholderTextColor="#999"
+            value={form.password}
+            onChangeText={(text) => handleChange('password', text)}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="비밀번호를 다시 입력하세요"
-        placeholderTextColor="#999"
-        secureTextEntry
-        value={form.confirmPassword}
-        onChangeText={(text) => handleChange('confirmPassword', text)}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="비밀번호 확인"
+            secureTextEntry
+            placeholderTextColor="#999"
+            value={form.confirmPassword}
+            onChangeText={(text) => handleChange('confirmPassword', text)}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="이메일을 입력하세요"
-        placeholderTextColor="#999"
-        value={form.email}
-        onChangeText={(text) => handleChange('email', text)}
-        keyboardType="email-address"
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="이메일"
+            placeholderTextColor="#999"
+            value={form.email}
+            onChangeText={(text) => handleChange('email', text)}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="전화번호를 입력하세요 (010-XXXX-XXXX)"
-        placeholderTextColor="#999"
-        value={form.phone}
-        onChangeText={(text) => handleChange('phone', text)}
-        keyboardType="phone-pad"
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="전화번호 (010-XXXX-XXXX)"
+            placeholderTextColor="#999"
+            value={form.phone}
+            keyboardType="phone-pad"
+            onChangeText={(text) => handleChange('phone', text)}
+          />
 
-      <TouchableOpacity style={styles.datePickerButton} onPress={() => setShowPicker(true)}>
-        <Text style={styles.datePickerText}>📅 생년월일: {formatDate(birthdate)}</Text>
-      </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.datePickerButton}
+            onPress={() => setShowPicker(true)}
+          >
+            <Text style={styles.datePickerText}>
+              📅 생년월일: {formatDate(birthdate)}
+            </Text>
+          </TouchableOpacity>
 
-      {showPicker && (
-        <DateTimePicker
-          value={birthdate}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-        />
-      )}
+          {showPicker && (
+            <DateTimePicker
+              value={birthdate}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+            />
+          )}
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>회원가입</Text>
-      </TouchableOpacity>
-    </ScrollView>
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+            <Text style={styles.buttonText}>회원가입</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
